@@ -3,7 +3,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 ## APP de Prueba para API Cliente
-
+listaDelivery = []
 listaCliente = []
 listaProducto = []
 
@@ -113,3 +113,60 @@ def borrarProducto(id):
     index = int(id) - 1
     listaProducto.pop(index)
     return "Producto " + id +  " Borrado"
+
+
+
+### Aquí inicia Delivery
+@app.get("/delivery")
+def getDeliveries():
+    return listaDelivery
+
+@app.get("/delivery/<id>")
+def getDelivery(id):
+    for index, delivery in enumerate(listaDelivery):
+        if delivery["id"] == int(id):
+            return delivery
+    return "Delivery not found", 404
+
+@app.post("/delivery")
+def insertDelivery():
+    json = request.get_json()
+
+    delivery = {
+        "id": json["id"],
+        "estado": json["estado"],
+        "productos": json["productos"]
+    }
+
+    listaDelivery.append(delivery)
+    return "Delivery created"
+
+@app.put("/delivery/<id>")
+def updateDelivery(id):
+    json = request.get_json()
+
+    for index, delivery in enumerate(listaDelivery):
+        if delivery["id"] == int(id):
+            listaDelivery[index] = {
+                "id": json["id"],
+                "estado": json["estado"],
+                "productos": json["productos"]
+            }
+            return "Delivery updated"
+    return "Delivery not found", 404
+
+@app.delete("/delivery")
+def deleteDeliveries():
+    listaDelivery.clear()
+    return "Deliveries deleted"
+
+@app.delete("/delivery/<id>")
+def deleteDelivery(id):
+    for index, delivery in enumerate(listaDelivery):
+        if delivery["id"] == int(id):
+            listaDelivery.pop(index)
+            return f"Delivery {id} deleted"
+    return "Delivery not found", 404
+
+if __name__ == "__main__":
+    app.run(debug=True)
