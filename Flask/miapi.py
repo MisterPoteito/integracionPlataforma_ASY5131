@@ -3,7 +3,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 ## APP de Prueba para API Cliente
-listaDelivery = []
+listaFactura = []
 listaCliente = []
 listaProducto = []
 
@@ -114,59 +114,50 @@ def borrarProducto(id):
     listaProducto.pop(index)
     return "Producto " + id +  " Borrado"
 
+#AQUI INICIA FACTURA
 
+@app.get("/factura")
+def getFacturas():
+    return listaFactura
 
-### Aquí inicia Delivery
-@app.get("/delivery")
-def getDeliveries():
-    return listaDelivery
+@app.get("/factura/<id>")
+def getFactura(id):
+    factura = next((f for f in listaFactura if f["id"] == id), None)
+    if factura:
+        return factura
+    return "Factura no encontrada", 404
 
-@app.get("/delivery/<id>")
-def getDelivery(id):
-    for index, delivery in enumerate(listaDelivery):
-        if delivery["id"] == int(id):
-            return delivery
-    return "Delivery not found", 404
-
-@app.post("/delivery")
-def insertDelivery():
+@app.post("/factura")
+def insertaFactura():
     json = request.get_json()
+    productos_ids = json["productos"]
+    productos = []
+    total = 0
 
-    delivery = {
+    for producto_id in productos_ids:
+        producto = next((p for p in listaProducto if p["id"] == producto_id), None)
+        if producto:
+            productos.append(producto)
+            total += producto["precio"]
+        else:
+            return f"Producto con id {producto_id} no encontrado", 404
+
+    factura = {
         "id": json["id"],
-        "estado": json["estado"],
-        "productos": json["productos"]
+        "cliente_id": json["cliente_id"],
+        "productos": productos,
+        "total": total
     }
+    listaFactura.append(factura)
+    return "Factura Creada"
 
-    listaDelivery.append(delivery)
-    return "Delivery created"
-
-@app.put("/delivery/<id>")
-def updateDelivery(id):
-    json = request.get_json()
-
-    for index, delivery in enumerate(listaDelivery):
-        if delivery["id"] == int(id):
-            listaDelivery[index] = {
-                "id": json["id"],
-                "estado": json["estado"],
-                "productos": json["productos"]
-            }
-            return "Delivery updated"
-    return "Delivery not found", 404
-
-@app.delete("/delivery")
-def deleteDeliveries():
-    listaDelivery.clear()
-    return "Deliveries deleted"
-
-@app.delete("/delivery/<id>")
-def deleteDelivery(id):
-    for index, delivery in enumerate(listaDelivery):
-        if delivery["id"] == int(id):
-            listaDelivery.pop(index)
-            return f"Delivery {id} deleted"
-    return "Delivery not found", 404
+@app.delete("/factura/<id>")
+def borrarFactura(id):
+    index = next((i for i, f in enumerate(listaFactura) if f["id"] == id), None)
+    if index is not None:
+        listaFactura.pop(index)
+        return "Factura Borrada"
+    return "Factura no encontrada", 404
 
 if __name__ == "__main__":
     app.run(debug=True)
